@@ -467,3 +467,7 @@ Give a ⭐️ if this project helped you organize your folders!
 - Understand that protected system paths are blocked for your safety
 
 **The parent folders are preserved, but all their contents are permanently deleted.**
+
+## License
+
+This application has an MIT license - see the [LICENSE](LICENSE) file for details.
