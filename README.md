@@ -56,8 +56,8 @@ graph TD
 ```mermaid
 graph LR
     A[PathValidator] -->|Resolved Path| B[Scanner]
-    B -->|FolderScanResult[]| C[Cleaner]
-    C -->|CleanResult[]| D[Main]
+    B -->|"FolderScanResult[]"| C[Cleaner]
+    C -->|"CleanResult[]"| D[Main]
     D -->|Display| E[Console]
     F[FileUtils] -.->|Helpers| A
     F -.->|Helpers| B
