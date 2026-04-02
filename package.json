@@ -1,0 +1,51 @@
+{
+  "name": "folders-cleaner",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "CLI tool that clears all files from first-level subfolders while preserving the folder structure",
+  "keywords": [
+    "folder-cleanup",
+    "disk-space",
+    "cli",
+    "typescript",
+    "filesystem",
+    "developer-tools",
+    "nodejs",
+    "storage-management"
+  ],
+  "author": "Or Assayag",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/orassayag/folders-cleaner"
+  },
+  "bugs": {
+    "url": "https://github.com/orassayag/folders-cleaner/issues"
+  },
+  "homepage": "https://github.com/orassayag/folders-cleaner#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "build": "tsc",
+    "test": "NODE_OPTIONS='--no-warnings' vitest run",
+    "test:watch": "NODE_OPTIONS='--no-warnings' vitest",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "prettier": "prettier --check 'src/**/*.ts'",
+    "prettier:fix": "prettier --write 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.37.0",
+    "prettier": "^3.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.2",
+    "vitest": "^2.1.9"
+  }
+}
