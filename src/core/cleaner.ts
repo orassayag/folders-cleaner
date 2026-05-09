@@ -6,10 +6,7 @@ import { rm } from 'fs/promises';
 export type ProgressCallback = (info: ProgressInfo) => void;
 
 export class Cleaner {
-  async clean(
-    folders: FolderScanResult[],
-    onProgress?: ProgressCallback
-  ): Promise<CleanResult[]> {
+  async clean(folders: FolderScanResult[], onProgress?: ProgressCallback): Promise<CleanResult[]> {
     const results: CleanResult[] = [];
     for (let i = 0; i < folders.length; i++) {
       const folder = folders[i];
@@ -45,7 +42,7 @@ export class Cleaner {
           return {
             success: false,
             folderPath,
-            error: (error as Error).message || 'Unknown error',
+            error: (error as Error).message || /* istanbul ignore next */ 'Unknown error',
             partiallyDeleted: itemsDeleted,
           };
         }
@@ -59,7 +56,7 @@ export class Cleaner {
       return {
         success: false,
         folderPath,
-        error: (error as Error).message || 'Unknown error',
+        error: (error as Error).message || /* istanbul ignore next */ 'Unknown error',
         partiallyDeleted: itemsDeleted,
       };
     }

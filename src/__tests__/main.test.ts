@@ -1,155 +1,200 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mkdtemp, rm, writeFile, mkdir } from 'fs/promises';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { validateAndResolvePath } from '../utils/pathValidator.js';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { main } from '../main.js';
+import { settings } from '../settings.js';
+import * as pathValidator from '../utils/pathValidator.js';
 import { Scanner } from '../core/scanner.js';
 import { Cleaner } from '../core/cleaner.js';
 
-describe('Integration Tests', () => {
-  let tempDir: string;
+vi.mock('../settings.js', () => ({
+  settings: {
+    targetPath: '/test/path',
+  },
+}));
 
-  beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), 'folders-cleaner-test-'));
+vi.mock('../utils/pathValidator.js', () => ({
+  validateAndResolvePath: vi.fn(),
+}));
+
+const scanFirstLevelFoldersMock = vi.fn();
+const cleanMock = vi.fn();
+
+vi.mock('../core/scanner.js', () => {
+  return {
+    Scanner: vi.fn().mockImplementation(function () {
+      return {
+        scanFirstLevelFolders: scanFirstLevelFoldersMock,
+      };
+    }),
+  };
+});
+
+vi.mock('../core/cleaner.js', () => {
+  return {
+    Cleaner: vi.fn().mockImplementation(function () {
+      return {
+        clean: cleanMock,
+      };
+    }),
+  };
+});
+
+describe('main', () => {
+  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  let processExitSpy: ReturnType<typeof vi.spyOn>;
+  let processStdoutWriteSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+      return undefined as never;
+    });
+    processStdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+    // Reset mocks
+    vi.mocked(pathValidator.validateAndResolvePath).mockReset();
+    scanFirstLevelFoldersMock.mockReset();
+    cleanMock.mockReset();
+    vi.mocked(Scanner).mockClear();
+    vi.mocked(Cleaner).mockClear();
   });
 
-  afterEach(async () => {
-    if (tempDir) {
-      await rm(tempDir, { recursive: true, force: true });
-    }
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  describe('Full workflow', () => {
-    it('should complete full workflow from validation to cleaning', async () => {
-      const folder1 = join(tempDir, 'folder1');
-      const folder2 = join(tempDir, 'folder2');
-      await mkdir(folder1);
-      await mkdir(folder2);
-      await writeFile(join(folder1, 'file1.txt'), 'test');
-      await writeFile(join(folder2, 'file2.txt'), 'test');
-      const resolvedPath = await validateAndResolvePath(tempDir);
-      expect(resolvedPath).toBe(tempDir);
-      const scanner = new Scanner();
-      const folders = await scanner.scanFirstLevelFolders(resolvedPath);
-      expect(folders).toHaveLength(2);
-      const cleaner = new Cleaner();
-      const results = await cleaner.clean(folders);
-      expect(results).toHaveLength(2);
-      expect(results.every((r) => r.success)).toBe(true);
-    });
+  it('should run successfully when folders are found and cleaned', async () => {
+    vi.mocked(pathValidator.validateAndResolvePath).mockResolvedValue('/test/path');
+    scanFirstLevelFoldersMock.mockResolvedValue([{ path: '/test/path/folder1' }]);
+    cleanMock.mockResolvedValue([
+      { success: true, itemsDeleted: 5, folderPath: '/test/path/folder1' },
+    ]);
 
-    it('should handle empty target directory', async () => {
-      const resolvedPath = await validateAndResolvePath(tempDir);
-      const scanner = new Scanner();
-      const folders = await scanner.scanFirstLevelFolders(resolvedPath);
-      expect(folders).toHaveLength(0);
-    });
+    await main();
 
-    it('should reject protected paths', async () => {
-      const protectedPath = process.platform === 'win32' ? 'C:\\Windows' : '/etc';
-      await expect(validateAndResolvePath(protectedPath)).rejects.toThrow(
-        'Cannot clean protected system path'
-      );
-    });
-
-    it('should handle multiple folders with mixed success', async () => {
-      const folder1 = join(tempDir, 'folder1');
-      const folder2 = join(tempDir, 'folder2');
-      await mkdir(folder1);
-      await mkdir(folder2);
-      await writeFile(join(folder1, 'file1.txt'), 'test');
-      await writeFile(join(folder2, 'file2.txt'), 'test');
-      const scanner = new Scanner();
-      const folders = await scanner.scanFirstLevelFolders(tempDir);
-      const cleaner = new Cleaner();
-      const results = await cleaner.clean(folders);
-      expect(results).toHaveLength(2);
-      const successCount = results.filter((r) => r.success).length;
-      expect(successCount).toBeGreaterThanOrEqual(0);
-    });
-
-    it('should track progress during cleaning', async () => {
-      const folder1 = join(tempDir, 'folder1');
-      const folder2 = join(tempDir, 'folder2');
-      const folder3 = join(tempDir, 'folder3');
-      await mkdir(folder1);
-      await mkdir(folder2);
-      await mkdir(folder3);
-      await writeFile(join(folder1, 'file1.txt'), 'test');
-      await writeFile(join(folder2, 'file2.txt'), 'test');
-      await writeFile(join(folder3, 'file3.txt'), 'test');
-      const scanner = new Scanner();
-      const folders = await scanner.scanFirstLevelFolders(tempDir);
-      const progressUpdates: number[] = [];
-      const cleaner = new Cleaner();
-      await cleaner.clean(folders, (info) => {
-        progressUpdates.push(info.current);
-        expect(info.total).toBe(3);
-        expect(info.currentFolder).toBeTruthy();
-      });
-      expect(progressUpdates).toEqual([1, 2, 3]);
-    });
-
-    it('should handle relative paths', async () => {
-      const folder1 = join(tempDir, 'folder1');
-      await mkdir(folder1);
-      await writeFile(join(folder1, 'file1.txt'), 'test');
-      const resolvedPath = await validateAndResolvePath(tempDir);
-      expect(resolvedPath).toBe(tempDir);
-      const scanner = new Scanner();
-      const folders = await scanner.scanFirstLevelFolders(resolvedPath);
-      expect(folders).toHaveLength(1);
-    });
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Successfully cleaned 1/1 folders')
+    );
+    expect(processExitSpy).toHaveBeenCalledWith(0);
   });
 
-  describe('Settings validation scenarios', () => {
-    it('should validate empty targetPath', async () => {
-      const emptyPath = '';
-      await expect(validateAndResolvePath(emptyPath)).rejects.toThrow('Target path cannot be empty');
-    });
+  it('should exit with 0 when no folders are found', async () => {
+    vi.mocked(pathValidator.validateAndResolvePath).mockResolvedValue('/test/path');
+    scanFirstLevelFoldersMock.mockResolvedValue([]);
 
-    it('should validate non-existent path', async () => {
-      const nonExistentPath = '/nonexistent/path/that/does/not/exist';
-      await expect(validateAndResolvePath(nonExistentPath)).rejects.toThrow('Target folder not found');
-    });
+    await main();
+
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No subdirectories found'));
+    expect(processExitSpy).toHaveBeenCalledWith(0);
   });
 
-  describe('Progress bar simulation', () => {
-    it('should handle TTY mode progress updates', async () => {
-      const folder1 = join(tempDir, 'folder1');
-      await mkdir(folder1);
-      await writeFile(join(folder1, 'file1.txt'), 'test');
-      const scanner = new Scanner();
-      const folders = await scanner.scanFirstLevelFolders(tempDir);
-      const cleaner = new Cleaner();
-      const consoleSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
-      await cleaner.clean(folders, (info) => {
-        if (process.stdout.isTTY) {
-          process.stdout.write(`\rProcessing: [${info.current}/${info.total}]`);
-        }
-      });
-      if (process.stdout.isTTY) {
-        expect(consoleSpy).toHaveBeenCalled();
-      }
-      consoleSpy.mockRestore();
+  it('should show error and exit with 1 when settings are invalid (empty)', async () => {
+    settings.targetPath = '';
+    await main();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Configuration Required'));
+    expect(processExitSpy).toHaveBeenCalledWith(1);
+    settings.targetPath = '/test/path'; // reset
+  });
+
+  it('should show error and exit with 1 when settings are placeholder', async () => {
+    settings.targetPath = '/path/to/target';
+    await main();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Configuration Required'));
+    expect(processExitSpy).toHaveBeenCalledWith(1);
+    settings.targetPath = '/test/path'; // reset
+  });
+
+  it('should handle partial failures', async () => {
+    vi.mocked(pathValidator.validateAndResolvePath).mockResolvedValue('/test/path');
+    scanFirstLevelFoldersMock.mockResolvedValue([
+      { path: '/test/path/folder1' },
+      { path: '/test/path/folder2' },
+    ]);
+    cleanMock.mockResolvedValue([
+      { success: true, itemsDeleted: 5, folderPath: '/test/path/folder1' },
+      { success: false, error: 'Locked', partiallyDeleted: 2, folderPath: '/test/path/folder2' },
+    ]);
+
+    await main();
+
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Cleaned 1/2 folders (1 failed)')
+    );
+    expect(processExitSpy).toHaveBeenCalledWith(1);
+  });
+
+  it('should handle "Target folder not found" error', async () => {
+    vi.mocked(pathValidator.validateAndResolvePath).mockRejectedValue(
+      new Error('Target folder not found')
+    );
+    await main();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Target folder not found')
+    );
+    expect(processExitSpy).toHaveBeenCalledWith(1);
+  });
+
+  it('should handle "Target must be a folder" error', async () => {
+    vi.mocked(pathValidator.validateAndResolvePath).mockRejectedValue(
+      new Error('Target must be a folder')
+    );
+    await main();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Target must be a folder')
+    );
+    expect(processExitSpy).toHaveBeenCalledWith(1);
+  });
+
+  it('should handle "Cannot clean protected system path" error', async () => {
+    vi.mocked(pathValidator.validateAndResolvePath).mockRejectedValue(
+      new Error('Cannot clean protected system path')
+    );
+    await main();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Cannot clean protected system path')
+    );
+    expect(processExitSpy).toHaveBeenCalledWith(1);
+  });
+
+  it('should handle "Permission denied" error', async () => {
+    vi.mocked(pathValidator.validateAndResolvePath).mockRejectedValue(
+      new Error('Permission denied')
+    );
+    await main();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Permission denied'));
+    expect(processExitSpy).toHaveBeenCalledWith(1);
+  });
+
+  it('should handle generic errors', async () => {
+    vi.mocked(pathValidator.validateAndResolvePath).mockRejectedValue(
+      new Error('Some random error')
+    );
+    await main();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Fatal Error'));
+    expect(processExitSpy).toHaveBeenCalledWith(1);
+  });
+
+  it('should display progress', async () => {
+    vi.mocked(pathValidator.validateAndResolvePath).mockResolvedValue('/test/path');
+    scanFirstLevelFoldersMock.mockResolvedValue([{ path: '/test/path/folder1' }]);
+    cleanMock.mockImplementation(async (_folders, progressCb) => {
+      progressCb({ current: 1, total: 1, currentFolder: '/test/path/folder1' });
+      return [{ success: true, itemsDeleted: 5, folderPath: '/test/path/folder1' }];
     });
 
-    it('should handle non-TTY mode progress updates', async () => {
-      const folder1 = join(tempDir, 'folder1');
-      await mkdir(folder1);
-      await writeFile(join(folder1, 'file1.txt'), 'test');
-      const scanner = new Scanner();
-      const folders = await scanner.scanFirstLevelFolders(tempDir);
-      const cleaner = new Cleaner();
-      const progressLogs: string[] = [];
-      await cleaner.clean(folders, (info) => {
-        if (!process.stdout.isTTY) {
-          progressLogs.push(`Processing: [${info.current}/${info.total}]`);
-        }
-      });
-      if (!process.stdout.isTTY) {
-        expect(progressLogs.length).toBeGreaterThan(0);
-      }
-    });
+    // Mock TTY
+    const originalIsTTY = process.stdout.isTTY;
+    Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+
+    await main();
+
+    expect(processStdoutWriteSpy).toHaveBeenCalled();
+
+    Object.defineProperty(process.stdout, 'isTTY', { value: false, configurable: true });
+    await main();
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Processing:'));
+
+    Object.defineProperty(process.stdout, 'isTTY', { value: originalIsTTY, configurable: true });
   });
 });

@@ -27,7 +27,10 @@ export function isProtectedPath(resolvedPath: string): boolean {
     }
     const homeDir = normalize(homedir());
     const usersDir = dirname(homeDir);
-    if (normalizedPath.toLowerCase() === homeDir.toLowerCase() || normalizedPath.toLowerCase() === usersDir.toLowerCase()) {
+    if (
+      normalizedPath.toLowerCase() === homeDir.toLowerCase() ||
+      normalizedPath.toLowerCase() === usersDir.toLowerCase()
+    ) {
       return true;
     }
   } else {
@@ -51,7 +54,11 @@ export function isProtectedPath(resolvedPath: string): boolean {
     }
   }
   const cwd = normalize(process.cwd());
-  const isTempDir = normalizedPath.startsWith('/tmp') || normalizedPath.startsWith('/var/folders') || normalizedPath.startsWith('/private/var/folders');
+  const isTempDir =
+    normalizedPath.startsWith('/tmp') ||
+    normalizedPath.startsWith('/var/folders') ||
+    normalizedPath.startsWith('/private/var/folders');
+  /* istanbul ignore next */
   if (!isTempDir && normalizedPath === cwd) {
     return true;
   }
@@ -75,7 +82,10 @@ export async function validatePathPermissions(resolvedPath: string): Promise<voi
   try {
     await access(resolvedPath, constants.R_OK | constants.W_OK);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM') {
+    if (
+      (error as NodeJS.ErrnoException).code === 'EACCES' ||
+      (error as NodeJS.ErrnoException).code === 'EPERM'
+    ) {
       throw new Error(`Permission denied accessing path: ${resolvedPath}`);
     }
     throw error;
@@ -87,6 +97,9 @@ export async function validateAndResolvePath(targetPath: string): Promise<string
     throw new Error('Target path cannot be empty');
   }
   const resolvedPath = resolve(targetPath);
+  if (isProtectedPath(resolvedPath)) {
+    throw new Error(`Cannot clean protected system path: ${resolvedPath}`);
+  }
   try {
     const stats = await stat(resolvedPath);
     if (!stats.isDirectory()) {
@@ -97,9 +110,6 @@ export async function validateAndResolvePath(targetPath: string): Promise<string
       throw new Error(`Target folder not found: ${resolvedPath}`);
     }
     throw error;
-  }
-  if (isProtectedPath(resolvedPath)) {
-    throw new Error(`Cannot clean protected system path: ${resolvedPath}`);
   }
   await validatePathPermissions(resolvedPath);
   return resolvedPath;

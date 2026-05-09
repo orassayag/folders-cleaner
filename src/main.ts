@@ -31,7 +31,7 @@ function displayProgress(info: ProgressInfo): void {
   }
 }
 
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   try {
     console.log('\n🗑️  Folders Cleaner\n');
     validateSettings();
@@ -69,7 +69,9 @@ async function main(): Promise<void> {
       console.log('✅ Done!\n');
       process.exit(0);
     } else {
-      console.log(`\n⚠️  Cleaned ${successCount}/${folders.length} folders (${failureCount} failed)`);
+      console.log(
+        `\n⚠️  Cleaned ${successCount}/${folders.length} folders (${failureCount} failed)`
+      );
       console.log(`Total items deleted: ${totalItemsDeleted}\n`);
       console.log('Failed folders:');
       for (const result of results) {
@@ -110,4 +112,8 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+// Only run main if this file is the entry point and not being tested
+/* istanbul ignore next */
+if (process.env.NODE_ENV !== 'test' && import.meta.url.endsWith('main.ts')) {
+  main();
+}

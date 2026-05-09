@@ -1,7 +1,39 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtemp, rm, writeFile } from 'fs/promises';
-import { tmpdir, homedir } from 'os';
-import { join } from 'path';
+import { tmpdir } from 'os';
+import * as os from 'os';
+import { join, dirname } from 'path';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
+// Mock os
+vi.mock('os', async () => {
+  const actual = await vi.importActual<typeof import('os')>('os');
+  return {
+    ...actual,
+    homedir: vi.fn(actual.homedir),
+    tmpdir: vi.fn(actual.tmpdir),
+  };
+});
+
+// Mock fs/promises
+vi.mock('fs/promises', async () => {
+  const actual = await vi.importActual<typeof import('fs/promises')>('fs/promises');
+  return {
+    ...actual,
+    access: vi.fn(actual.access),
+  };
+});
+
+// Mock path
+vi.mock('path', async () => {
+  const actual = await vi.importActual<typeof import('path')>('path');
+  return {
+    ...actual,
+    normalize: vi.fn(actual.normalize),
+  };
+});
+
 import {
   validateAndResolvePath,
   isProtectedPath,
@@ -17,6 +49,7 @@ describe('pathValidator', () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     if (tempDir) {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -63,8 +96,49 @@ describe('pathValidator', () => {
     });
 
     it('should detect home directory as protected', () => {
-      const home = homedir();
+      const home = os.homedir();
       expect(isProtectedPath(home)).toBe(true);
+    });
+
+    it('should detect Unix protected paths', async () => {
+      // Force platform to linux for this test
+      const originalPlatform = process.platform;
+      Object.defineProperty(process, 'platform', { value: 'linux' });
+
+      // We need to mock normalize because on Windows it will convert / to \
+      const mockNormalize = vi.mocked(path.normalize).mockImplementation((p) => p);
+
+      try {
+        expect(isProtectedPath('/')).toBe(true);
+        expect(isProtectedPath('/etc')).toBe(true);
+        expect(isProtectedPath('/usr')).toBe(true);
+        expect(isProtectedPath('/bin')).toBe(true);
+
+        const home = '/home/user';
+        vi.mocked(os.homedir).mockReturnValue(home);
+        expect(isProtectedPath(home)).toBe(true);
+        expect(isProtectedPath('/home')).toBe(true);
+      } finally {
+        vi.mocked(os.homedir).mockRestore();
+        mockNormalize.mockRestore();
+        Object.defineProperty(process, 'platform', { value: originalPlatform });
+      }
+    });
+
+    it('should detect parent of CWD as protected', () => {
+      const cwd = process.cwd();
+      const parent = dirname(cwd);
+      const grandParent = dirname(parent);
+
+      expect(isProtectedPath(parent)).toBe(true);
+      expect(isProtectedPath(grandParent)).toBe(true);
+    });
+
+    it('should not detect current working directory as protected if it is a temp dir', () => {
+      // Mock normalize to return a temp path
+      vi.mocked(path.normalize).mockReturnValueOnce('/tmp/some-dir');
+      expect(isProtectedPath('/tmp/some-dir')).toBe(false);
+      vi.mocked(path.normalize).mockRestore();
     });
 
     it('should detect current working directory as protected', () => {
@@ -84,6 +158,16 @@ describe('pathValidator', () => {
 
     it('should throw for non-existent directory', async () => {
       await expect(validatePathPermissions('/nonexistent/path')).rejects.toThrow();
+    });
+
+    it('should throw for permission denied', async () => {
+      const error = new Error('EACCES') as NodeJS.ErrnoException;
+      error.code = 'EACCES';
+      vi.mocked(fs.access).mockRejectedValueOnce(error);
+
+      await expect(validatePathPermissions(tempDir)).rejects.toThrow(
+        'Permission denied accessing path'
+      );
     });
   });
 

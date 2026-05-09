@@ -1,10 +1,22 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtemp, rm, writeFile, mkdir, readdir, symlink } from 'fs/promises';
+import * as fsPromises from 'fs/promises';
+import { Dirent } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { Cleaner } from '../../core/cleaner.js';
 import { FolderScanResult } from '../../types/index.js';
 import { pathExists } from '../../utils/fileUtils.js';
+import * as fileUtils from '../../utils/fileUtils.js';
+
+// Mock fs/promises
+vi.mock('fs/promises', async () => {
+  const actual = await vi.importActual<typeof import('fs/promises')>('fs/promises');
+  return {
+    ...actual,
+    rm: vi.fn(actual.rm),
+  };
+});
 
 describe('Cleaner', () => {
   let tempDir: string;
@@ -186,6 +198,74 @@ describe('Cleaner', () => {
         expect(results[0].error).toBeTruthy();
         expect(results[0].partiallyDeleted).toBe(0);
       }
+    });
+
+    it('should handle errors during item deletion', async () => {
+      const folder1 = join(tempDir, 'folder1');
+      await mkdir(folder1);
+      await writeFile(join(folder1, 'file1.txt'), 'test');
+
+      const deleteFileSpy = vi
+        .spyOn(fileUtils, 'deleteFileOrLink')
+        .mockRejectedValueOnce(new Error('Mock delete error'));
+
+      const folders: FolderScanResult[] = [{ path: folder1 }];
+      const results = await cleaner.clean(folders);
+
+      expect(results[0].success).toBe(false);
+      if (!results[0].success) {
+        expect(results[0].error).toBe('Mock delete error');
+        expect(results[0].partiallyDeleted).toBe(0);
+      }
+
+      deleteFileSpy.mockRestore();
+    });
+
+    it('should handle unknown errors during item deletion', async () => {
+      const folder1 = join(tempDir, 'folder1');
+      await mkdir(folder1);
+      await writeFile(join(folder1, 'file1.txt'), 'test');
+
+      const deleteFileSpy = vi
+        .spyOn(fileUtils, 'deleteFileOrLink')
+        .mockRejectedValueOnce('Unknown string error');
+
+      const folders: FolderScanResult[] = [{ path: folder1 }];
+      const results = await cleaner.clean(folders);
+
+      expect(results[0].success).toBe(false);
+      if (!results[0].success) {
+        expect(results[0].error).toBe('Unknown error');
+      }
+
+      deleteFileSpy.mockRestore();
+    });
+
+    it('should handle unknown entry types', async () => {
+      const folder1 = join(tempDir, 'folder1');
+      await mkdir(folder1);
+
+      const mockEntry = {
+        name: 'unknown',
+        isDirectory: () => false,
+        isFile: () => false,
+        isSymbolicLink: () => false,
+        isBlockDevice: () => false,
+        isCharacterDevice: () => false,
+        isFIFO: () => false,
+        isSocket: () => false,
+      } as unknown as Dirent;
+
+      const spy = vi.spyOn(fileUtils, 'getDirectoryEntries').mockResolvedValueOnce([mockEntry]);
+      vi.mocked(fsPromises.rm).mockResolvedValue(undefined);
+
+      const folders: FolderScanResult[] = [{ path: folder1 }];
+      const results = await cleaner.clean(folders);
+
+      expect(results[0].success).toBe(true);
+      expect(fsPromises.rm).toHaveBeenCalled();
+
+      spy.mockRestore();
     });
   });
 });

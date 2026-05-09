@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtemp, rm, writeFile, mkdir, symlink } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { Scanner } from '../../core/scanner.js';
+import * as fileUtils from '../../utils/fileUtils.js';
 
 describe('Scanner', () => {
   let tempDir: string;
@@ -66,6 +67,28 @@ describe('Scanner', () => {
 
     it('should throw error for non-existent directory', async () => {
       await expect(scanner.scanFirstLevelFolders('/nonexistent/path')).rejects.toThrow();
+    });
+
+    it('should throw specific error for permission denied', async () => {
+      const error = new Error('EACCES') as NodeJS.ErrnoException;
+      error.code = 'EACCES';
+      const spy = vi.spyOn(fileUtils, 'getDirectoryEntries').mockRejectedValueOnce(error);
+
+      await expect(scanner.scanFirstLevelFolders(tempDir)).rejects.toThrow(
+        'Permission denied scanning directory'
+      );
+      spy.mockRestore();
+    });
+
+    it('should throw specific error for EPERM permission denied', async () => {
+      const error = new Error('EPERM') as NodeJS.ErrnoException;
+      error.code = 'EPERM';
+      const spy = vi.spyOn(fileUtils, 'getDirectoryEntries').mockRejectedValueOnce(error);
+
+      await expect(scanner.scanFirstLevelFolders(tempDir)).rejects.toThrow(
+        'Permission denied scanning directory'
+      );
+      spy.mockRestore();
     });
   });
 });
