@@ -1,9 +1,8 @@
 {
   "name": "folders-cleaner",
   "version": "1.0.0",
-  "type": "module",
-  "private": true,
-  "description": "CLI tool that clears all files from first-level subfolders while preserving the folder structure",
+  "private": false,
+  "description": "A powerful TypeScript CLI tool that clears all files from first-level subfolders while preserving folder structure. Ideal for cleaning project directories, test outputs, or any hierarchy where structure stays intact but contents are removed. Scans removes files from subfolders cleanup safe",
   "keywords": [
     "folder-cleanup",
     "disk-space",
@@ -14,30 +13,78 @@
     "nodejs",
     "storage-management"
   ],
-  "author": "Or Assayag",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/orassayag/folders-cleaner"
-  },
+  "homepage": "https://github.com/orassayag/folders-cleaner#readme",
   "bugs": {
     "url": "https://github.com/orassayag/folders-cleaner/issues"
   },
-  "homepage": "https://github.com/orassayag/folders-cleaner#readme",
-  "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/orassayag/folders-cleaner.git"
   },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/orassayag"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Or Assayag",
+    "email": "orassayag@gmail.com",
+    "url": "https://github.com/orassayag"
+  },
+  "contributors": [
+    {
+      "name": "Or Assayag",
+      "email": "orassayag@gmail.com",
+      "url": "https://github.com/orassayag"
+    }
+  ],
+  "type": "module",
+  "main": "src/index.ts",
+  "files": [
+    ".github",
+    ".vscode",
+    "docs",
+    "src",
+    ".eslintrc.json",
+    ".gitignore",
+    ".npmrc",
+    ".prettierrc",
+    ".prettierrc.json",
+    "CHANGELOG.md",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
+    "eslint.config.mjs",
+    "INSTRUCTIONS.md",
+    "LICENSE",
+    "package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "README.md",
+    "SECURITY.md",
+    "tsconfig.json",
+    "tsconfig.node.json",
+    "vitest.config.ts"
+  ],
   "scripts": {
-    "start": "tsx src/main.ts",
     "build": "tsc",
-    "test": "cross-env NODE_OPTIONS='--no-warnings' vitest run --coverage",
-    "test:watch": "cross-env NODE_OPTIONS='--no-warnings' vitest",
-    "test:no-coverage": "cross-env NODE_OPTIONS='--no-warnings' vitest run",
-    "lint": "eslint src --ext .ts",
+    "dev": "tsx watch src/index.ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint src --ext .ts --fix",
     "prettier": "prettier --check 'src/**/*.ts'",
-    "prettier:fix": "prettier --write 'src/**/*.ts'"
+    "prettier:fix": "prettier --write 'src/**/*.ts'",
+    "start": "tsx src/index.ts",
+    "start:live": "cross-env DRY_MODE=false tsx src/index.ts",
+    "start:no-cache": "tsx src/index.ts --no-cache",
+    "sync": "tsx src/index.ts --auto",
+    "test": "cross-env NODE_OPTIONS='--no-warnings' vitest run --coverage",
+    "test:no-coverage": "cross-env NODE_OPTIONS='--no-warnings' vitest run",
+    "test:ui": "vitest --ui",
+    "test:watch": "cross-env NODE_OPTIONS='--no-warnings' vitest"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
@@ -47,8 +94,12 @@
     "cross-env": "^10.1.0",
     "eslint": "^10.4.1",
     "prettier": "^3.8.3",
-    "tsx": "^4.22.3",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
   }
 }

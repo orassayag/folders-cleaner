@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { FolderScanResult } from '../types/index.js';
-import { getDirectoryEntries } from '../utils/fileUtils.js';
+import { getDirectoryEntries } from '../utils/index.js';
 
 export class Scanner {
   async scanFirstLevelFolders(targetPath: string): Promise<FolderScanResult[]> {
@@ -16,7 +16,10 @@ export class Scanner {
       }
       return folders;
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM') {
+      if (
+        (error as NodeJS.ErrnoException).code === 'EACCES' ||
+        (error as NodeJS.ErrnoException).code === 'EPERM'
+      ) {
         throw new Error(`Permission denied scanning directory: ${targetPath}`);
       }
       throw error;

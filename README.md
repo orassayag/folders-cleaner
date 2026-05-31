@@ -16,6 +16,27 @@ Do you have folder structures you want to preserve but need to clear out all the
 
 ## ✨ Features
 
+### Core Capabilities
+
+- **First-Level Scanning**: Scans only immediate subfolders (not recursive)
+- **Content Deletion**: Removes all files and nested folders while preserving parent folders
+- **Protected Paths**: Prevents cleaning of system directories (/, /etc, C:\Windows, etc.)
+- **Progress Tracking**: Real-time progress display with folder counts
+
+### Technical Excellence
+
+- **TypeScript**: Written in TypeScript with full type safety and modern features
+- **Modular Architecture**: Clean separation of concerns between scanning, cleaning, and validation
+- **Cross-Platform**: Handles Mac, Linux, and Windows paths correctly with robust normalization
+- **Comprehensive Testing**: Full test suite with Vitest covering unit and integration scenarios
+
+### Developer Experience
+
+- **Fast Setup**: Simple configuration and quick installation with pnpm
+- **Strict Linting**: Pre-configured ESLint and Prettier for consistent code quality
+- **Test-Driven**: Optimized for TDD with fast watch mode and coverage reporting
+- **Clear Documentation**: Detailed implementation plans and developer instructions
+
 - 🔍 **First-Level Scanning**: Scans only immediate subfolders (not recursive)
 - 🗑️ **Content Deletion**: Removes all files and nested folders while preserving parent folders
 - 🛡️ **Protected Paths**: Prevents cleaning of system directories (/, /etc, C:\Windows, etc.)
@@ -26,6 +47,16 @@ Do you have folder structures you want to preserve but need to clear out all the
 - 🧪 **Well-Tested**: Comprehensive test suite with vitest
 
 ## 📊 Architecture
+
+### Architecture Principles
+
+This project follows clean architecture and security-first principles:
+
+1. **Separation of Concerns**: Distinct modules for path validation, directory scanning, and folder cleaning.
+2. **Security-First**: Comprehensive path validation prevents operations on system-critical directories.
+3. **Single Responsibility**: Each module has a clear, focused purpose with minimal overlap.
+4. **Idempotency**: Operations can be safely re-run without side effects (folders remain empty).
+5. **Robust Error Handling**: Sequential processing ensures failures are tracked and reported without stopping the entire workflow.
 
 ### System Flow
 
@@ -111,7 +142,39 @@ sequenceDiagram
     end
 ```
 
-## 🚀 Installation
+### Directory Structure
+
+```
+src/
+├── core/               # Business logic
+│   ├── scanner.ts      # Directory scanning
+│   └── cleaner.ts      # Content deletion
+├── utils/              # Helper utilities
+│   ├── pathValidator.ts # Path security
+│   └── fileUtils.ts    # FS wrappers
+├── types/              # Type definitions
+│   └── index.ts
+├── settings.ts         # Configuration
+├── index.ts            # Entry point
+└── main.ts             # Orchestration
+```
+
+### Design Patterns
+
+- **Orchestrator Pattern**: The `main.ts` module coordinates the workflow between validation, scanning, and cleaning.
+- **Repository Pattern**: `fileUtils.ts` abstracts file system operations.
+- **Strategy Pattern**: Different validation strategies for Windows vs Unix-based paths.
+- **Factory Pattern**: Result generation for scanning and cleaning operations.
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js**: Version 20 or higher
+- **pnpm**: Version 8 or higher (recommended)
+- **Permissions**: Read/Write access to the target directories
+
+### Installation
 
 ```bash
 # Clone the repository
@@ -379,6 +442,14 @@ If cleaning is blocked:
 - Choose a different, safer folder
 - This is a safety feature to prevent system damage
 
+## 💡 Best Practices
+
+1. **Verify Target Path**: Always double-check the `targetPath` in `settings.ts` before running the tool.
+2. **Use Absolute Paths**: Prefer absolute paths over relative paths to avoid ambiguity.
+3. **Backup Important Data**: While the tool preserves folders, the content deletion is permanent. Ensure you have backups if needed.
+4. **Run in Dry-Mode First**: Use the default dry-mode execution to verify which folders will be cleaned before running in live mode.
+5. **Regular Maintenance**: Integrate the tool into your automation workflows to keep temporary directories clean and organized.
+
 ## 🌍 Cross-Platform Support
 
 The tool fully supports Windows, Mac, and Linux:
@@ -471,3 +542,18 @@ Give a ⭐️ if this project helped you organize your folders!
 ## License
 
 This application has an MIT license - see the [LICENSE](LICENSE) file for details.
+
+## Author
+
+- **Or Assayag** - _Initial work_ - [orassayag](https://github.com/orassayag)
+- Or Assayag <orassayag@gmail.com>
+- GitHub: https://github.com/orassayag
+- StackOverflow: https://stackoverflow.com/users/4442606/or-assayag?tab=profile
+- LinkedIn: https://linkedin.com/in/orassayag
+
+## Acknowledgments
+
+- Built for educational and research purposes
+- Respects robots.txt and implements rate limiting
+- Uses user-agent rotation to avoid detection
+- Implements polite crawling practices

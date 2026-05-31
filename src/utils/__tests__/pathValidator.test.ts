@@ -18,7 +18,8 @@ vi.mock('os', async () => {
 
 // Mock fs/promises
 vi.mock('fs/promises', async () => {
-  const actual = await vi.importActual<typeof import('fs/promises')>('fs/promises');
+  const actual =
+    await vi.importActual<typeof import('fs/promises')>('fs/promises');
   return {
     ...actual,
     access: vi.fn(actual.access),
@@ -39,7 +40,7 @@ import {
   isProtectedPath,
   isWindowsPath,
   validatePathPermissions,
-} from '../pathValidator.js';
+} from '../index.js';
 
 describe('pathValidator', () => {
   let tempDir: string;
@@ -106,7 +107,9 @@ describe('pathValidator', () => {
       Object.defineProperty(process, 'platform', { value: 'linux' });
 
       // We need to mock normalize because on Windows it will convert / to \
-      const mockNormalize = vi.mocked(path.normalize).mockImplementation((p) => p);
+      const mockNormalize = vi
+        .mocked(path.normalize)
+        .mockImplementation((p) => p);
 
       try {
         expect(isProtectedPath('/')).toBe(true);
@@ -157,7 +160,9 @@ describe('pathValidator', () => {
     });
 
     it('should throw for non-existent directory', async () => {
-      await expect(validatePathPermissions('/nonexistent/path')).rejects.toThrow();
+      await expect(
+        validatePathPermissions('/nonexistent/path')
+      ).rejects.toThrow();
     });
 
     it('should throw for permission denied', async () => {
@@ -178,7 +183,9 @@ describe('pathValidator', () => {
     });
 
     it('should throw for empty path', async () => {
-      await expect(validateAndResolvePath('')).rejects.toThrow('Target path cannot be empty');
+      await expect(validateAndResolvePath('')).rejects.toThrow(
+        'Target path cannot be empty'
+      );
     });
 
     it('should throw for non-existent path', async () => {
@@ -196,7 +203,8 @@ describe('pathValidator', () => {
     });
 
     it('should throw for protected system path', async () => {
-      const protectedPath = process.platform === 'win32' ? 'C:\\Windows' : '/etc';
+      const protectedPath =
+        process.platform === 'win32' ? 'C:\\Windows' : '/etc';
       await expect(validateAndResolvePath(protectedPath)).rejects.toThrow(
         'Cannot clean protected system path'
       );

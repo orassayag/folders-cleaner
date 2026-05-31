@@ -65,6 +65,7 @@ folders-cleaner/
 ## Key Features Implemented
 
 ### 1. Cross-Platform Path Validation
+
 - Supports Mac, Linux, and Windows paths
 - Handles relative and absolute paths
 - Validates drive letters (C:, D:) and UNC paths (\\server\share)
@@ -72,11 +73,13 @@ folders-cleaner/
 - Checks permissions before operations
 
 ### 2. First-Level Directory Scanning
+
 - Scans only immediate subdirectories
 - Skips files and symlinks at first level
 - Fast and efficient (no recursive traversal)
 
 ### 3. Sequential Content Deletion
+
 - Processes folders one at a time
 - Deletes all contents (files, nested folders, hidden items)
 - Preserves parent folders
@@ -84,6 +87,7 @@ folders-cleaner/
 - Continues after individual failures
 
 ### 4. Safety Features
+
 - Protected path validation (prevents system damage)
 - Settings validation (no empty or placeholder paths)
 - Permission checking
@@ -91,6 +95,7 @@ folders-cleaner/
 - Temp directory exemption in tests
 
 ### 5. User Experience
+
 - Real-time progress tracking
 - TTY detection for appropriate output
 - Clear success/failure reporting
@@ -98,6 +103,7 @@ folders-cleaner/
 - Path truncation for display
 
 ### 6. Testing
+
 - 55 comprehensive tests covering:
   - Unit tests for all modules
   - Integration tests for full workflow
@@ -128,12 +134,15 @@ Tests: 55 passed (55)
 ## Usage
 
 ### 1. Install Dependencies
+
 ```bash
 pnpm install
 ```
 
 ### 2. Configure
+
 Edit `src/settings.ts`:
+
 ```typescript
 export const settings: Settings = {
   targetPath: '/path/to/your/target/folder',
@@ -141,11 +150,13 @@ export const settings: Settings = {
 ```
 
 ### 3. Run
+
 ```bash
 pnpm start
 ```
 
 ### Example Output
+
 ```
 🗑️  Folders Cleaner
 
@@ -180,29 +191,34 @@ pnpm prettier:fix   # Fix formatting
 ## Technical Highlights
 
 ### 1. Type Safety
+
 - Full TypeScript with strict mode
 - Discriminated unions for results (success/failure)
 - Explicit types throughout
 
 ### 2. Error Handling
+
 - Try-catch for all file operations
 - Graceful degradation
 - Detailed error messages
 - Never throws in cleaner module
 
 ### 3. Cross-Platform
+
 - Uses Node.js `path` module consistently
 - OS-specific protected paths
 - Path normalization
 - Works on Mac, Linux, Windows
 
 ### 4. Performance
+
 - Sequential processing for reliability
 - Async/await for non-blocking I/O
 - Atomic directory deletion
 - Efficient counting (immediate children only)
 
 ### 5. Code Quality
+
 - Clean, readable code
 - Comprehensive tests
 - Well-documented
@@ -211,12 +227,14 @@ pnpm prettier:fix   # Fix formatting
 ## Documentation
 
 ### User Documentation
+
 - **README.md**: Comprehensive user guide with examples, architecture diagrams, and troubleshooting
 - Architecture diagrams (Mermaid): System flow, module interaction, data flow
 - Cross-platform examples
 - Safety warnings
 
 ### Developer Documentation
+
 - **INSTRUCTIONS.md**: Detailed developer guide with module documentation, testing strategy, and cross-platform considerations
 - **CONTRIBUTING.md**: Contribution guidelines, coding standards, PR process
 - Inline JSDoc comments

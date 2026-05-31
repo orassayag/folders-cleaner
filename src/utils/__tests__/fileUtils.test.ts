@@ -9,7 +9,7 @@ import {
   deleteFileOrLink,
   deleteDirectory,
   formatPath,
-} from '../fileUtils.js';
+} from '../index.js';
 
 describe('fileUtils', () => {
   let tempDir: string;
@@ -56,8 +56,12 @@ describe('fileUtils', () => {
       await writeFile(join(tempDir, 'file.txt'), 'test');
       const entries = await getDirectoryEntries(tempDir);
       expect(entries).toHaveLength(2);
-      expect(entries.some((e) => e.name === 'subdir' && e.isDirectory())).toBe(true);
-      expect(entries.some((e) => e.name === 'file.txt' && e.isFile())).toBe(true);
+      expect(entries.some((e) => e.name === 'subdir' && e.isDirectory())).toBe(
+        true
+      );
+      expect(entries.some((e) => e.name === 'file.txt' && e.isFile())).toBe(
+        true
+      );
     });
 
     it('should return empty array for empty directory', async () => {
@@ -103,7 +107,8 @@ describe('fileUtils', () => {
     });
 
     it('should truncate long paths', () => {
-      const longPath = '/very/long/path/that/exceeds/sixty/characters/and/should/be/truncated';
+      const longPath =
+        '/very/long/path/that/exceeds/sixty/characters/and/should/be/truncated';
       const formatted = formatPath(longPath);
       expect(formatted.startsWith('...')).toBe(true);
       expect(formatted.length).toBeLessThanOrEqual(60);

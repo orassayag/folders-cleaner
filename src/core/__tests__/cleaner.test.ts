@@ -4,14 +4,14 @@ import * as fsPromises from 'fs/promises';
 import { Dirent } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { Cleaner } from '../../core/cleaner.js';
+import { Cleaner } from '../../core/index.js';
 import { FolderScanResult } from '../../types/index.js';
-import { pathExists } from '../../utils/fileUtils.js';
-import * as fileUtils from '../../utils/fileUtils.js';
+import * as fileUtils from '../../utils/index.js';
 
 // Mock fs/promises
 vi.mock('fs/promises', async () => {
-  const actual = await vi.importActual<typeof import('fs/promises')>('fs/promises');
+  const actual =
+    await vi.importActual<typeof import('fs/promises')>('fs/promises');
   return {
     ...actual,
     rm: vi.fn(actual.rm),
@@ -48,7 +48,7 @@ describe('Cleaner', () => {
       if (results[0].success) {
         expect(results[0].itemsDeleted).toBe(3);
       }
-      expect(await pathExists(folder1)).toBe(true);
+      expect(await fileUtils.pathExists(folder1)).toBe(true);
       const entries = await readdir(folder1);
       expect(entries).toHaveLength(0);
     });
@@ -78,7 +78,7 @@ describe('Cleaner', () => {
       if (results[0].success) {
         expect(results[0].itemsDeleted).toBe(0);
       }
-      expect(await pathExists(folder1)).toBe(true);
+      expect(await fileUtils.pathExists(folder1)).toBe(true);
     });
 
     it('should delete deeply nested directory trees', async () => {
@@ -107,13 +107,16 @@ describe('Cleaner', () => {
       await mkdir(folder2);
       await writeFile(join(folder1, 'file1.txt'), 'test');
       await writeFile(join(folder2, 'file2.txt'), 'test');
-      const folders: FolderScanResult[] = [{ path: folder1 }, { path: folder2 }];
+      const folders: FolderScanResult[] = [
+        { path: folder1 },
+        { path: folder2 },
+      ];
       const results = await cleaner.clean(folders);
       expect(results).toHaveLength(2);
       expect(results[0].success).toBe(true);
       expect(results[1].success).toBe(true);
-      expect(await pathExists(folder1)).toBe(true);
-      expect(await pathExists(folder2)).toBe(true);
+      expect(await fileUtils.pathExists(folder1)).toBe(true);
+      expect(await fileUtils.pathExists(folder2)).toBe(true);
       expect((await readdir(folder1)).length).toBe(0);
       expect((await readdir(folder2)).length).toBe(0);
     });
@@ -124,7 +127,10 @@ describe('Cleaner', () => {
       await mkdir(folder1);
       await mkdir(folder2);
       await writeFile(join(folder2, 'file2.txt'), 'test');
-      const folders: FolderScanResult[] = [{ path: folder1 }, { path: folder2 }];
+      const folders: FolderScanResult[] = [
+        { path: folder1 },
+        { path: folder2 },
+      ];
       const results = await cleaner.clean(folders);
       expect(results).toHaveLength(2);
       expect(results[0].success).toBe(true);
@@ -144,8 +150,10 @@ describe('Cleaner', () => {
         if (results[0].success) {
           expect(results[0].itemsDeleted).toBe(1);
         }
-        expect(await pathExists(targetFile)).toBe(true);
-        expect(await pathExists(join(folder1, 'link.txt'))).toBe(false);
+        expect(await fileUtils.pathExists(targetFile)).toBe(true);
+        expect(await fileUtils.pathExists(join(folder1, 'link.txt'))).toBe(
+          false
+        );
       } catch {
         console.log('Symlink test skipped (may require permissions)');
       }
@@ -181,7 +189,10 @@ describe('Cleaner', () => {
       const folder2 = join(tempDir, 'folder2');
       await mkdir(folder1);
       await mkdir(folder2);
-      const folders: FolderScanResult[] = [{ path: folder1 }, { path: folder2 }];
+      const folders: FolderScanResult[] = [
+        { path: folder1 },
+        { path: folder2 },
+      ];
       const progressUpdates: number[] = [];
       await cleaner.clean(folders, (info) => {
         progressUpdates.push(info.current);
@@ -256,7 +267,9 @@ describe('Cleaner', () => {
         isSocket: () => false,
       } as unknown as Dirent;
 
-      const spy = vi.spyOn(fileUtils, 'getDirectoryEntries').mockResolvedValueOnce([mockEntry]);
+      const spy = vi
+        .spyOn(fileUtils, 'getDirectoryEntries')
+        .mockResolvedValueOnce([mockEntry]);
       vi.mocked(fsPromises.rm).mockResolvedValue(undefined);
 
       const folders: FolderScanResult[] = [{ path: folder1 }];

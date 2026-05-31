@@ -1,5 +1,10 @@
 # Folders Cleaner - Developer Instructions
 
+**Version**: 1.0.0
+**Last Updated**: 2026-05-31
+
+## Setup and Usage Instructions
+
 This document provides detailed instructions for developers working on the Folders Cleaner project.
 
 ## Table of Contents
@@ -11,6 +16,7 @@ This document provides detailed instructions for developers working on the Folde
 - [Module Documentation](#module-documentation)
 - [Testing Strategy](#testing-strategy)
 - [Cross-Platform Development](#cross-platform-development)
+- [Available Commands](#available-commands)
 - [Troubleshooting](#troubleshooting)
 
 ## Project Overview
@@ -60,13 +66,13 @@ User Input (settings.ts)
 
 ### Module Responsibilities
 
-| Module | Responsibility | Key Functions |
-|--------|---------------|---------------|
-| `main.ts` | Entry point and orchestration | Validates settings, coordinates workflow, displays results |
-| `scanner.ts` | First-level scanning | Finds immediate subdirectories only |
-| `cleaner.ts` | Sequential deletion | Deletes contents of folders one by one |
-| `pathValidator.ts` | Path security | Validates, resolves, and protects paths |
-| `fileUtils.ts` | File operations | Helper functions for file system operations |
+| Module             | Responsibility                | Key Functions                                              |
+| ------------------ | ----------------------------- | ---------------------------------------------------------- |
+| `main.ts`          | Entry point and orchestration | Validates settings, coordinates workflow, displays results |
+| `scanner.ts`       | First-level scanning          | Finds immediate subdirectories only                        |
+| `cleaner.ts`       | Sequential deletion           | Deletes contents of folders one by one                     |
+| `pathValidator.ts` | Path security                 | Validates, resolves, and protects paths                    |
+| `fileUtils.ts`     | File operations               | Helper functions for file system operations                |
 
 ### Data Flow
 
@@ -104,11 +110,42 @@ User Input (settings.ts)
 
 ### Prerequisites
 
-- **Node.js** v18.0.0 or higher
-- **pnpm** v8.0.0 or higher
-- **Git** for version control
+#### System Requirements
+
+- **Node.js**: Version 20.0.0 or higher
+- **Package Manager**: pnpm (recommended) or npm
+- **Operating System**: macOS, Linux, or Windows
+- **Memory**: 1GB RAM minimum
+- **Disk Space**: 100MB for application and dependencies
+
+#### Knowledge Prerequisites
+
+- Basic understanding of command line/terminal
+- Understanding of TypeScript and Node.js environments
 
 ### Initial Setup
+
+#### 1. Install Dependencies
+
+**Using pnpm (recommended):**
+
+```bash
+pnpm install
+```
+
+**Using npm:**
+
+```bash
+npm install
+```
+
+**Verify installation:**
+
+```bash
+pnpm build
+```
+
+#### 2. Project Setup
 
 ```bash
 # 1. Clone the repository
@@ -131,11 +168,13 @@ pnpm lint
 #### VS Code (Recommended)
 
 Install recommended extensions:
+
 - ESLint
 - Prettier
 - TypeScript and JavaScript Language Features
 
 Settings (`.vscode/settings.json`):
+
 ```json
 {
   "editor.formatOnSave": true,
@@ -220,6 +259,7 @@ git push origin feature/your-feature-name
 ```typescript
 async validateAndResolvePath(targetPath: string): Promise<string>
 ```
+
 - Validates path exists, is directory, has permissions
 - Resolves relative paths to absolute
 - Checks against protected system paths
@@ -228,6 +268,7 @@ async validateAndResolvePath(targetPath: string): Promise<string>
 ```typescript
 isProtectedPath(resolvedPath: string): boolean
 ```
+
 - Checks if path is a protected system directory
 - Different logic for Windows vs Unix/Mac
 - Protects root, system directories, home directory, cwd
@@ -235,10 +276,12 @@ isProtectedPath(resolvedPath: string): boolean
 ```typescript
 isWindowsPath(path: string): boolean
 ```
+
 - Detects Windows-style paths (drive letters, UNC paths)
 - Used for validation and formatting
 
 **Protected Paths**:
+
 - Unix/Mac: `/`, `/etc`, `/usr`, `/bin`, `/System`, home directory
 - Windows: `C:\`, `C:\Windows`, `C:\Program Files`, home directory
 
@@ -253,12 +296,14 @@ async scanFirstLevelFolders(targetPath: string): Promise<FolderScanResult[]>
 ```
 
 **Algorithm**:
+
 1. Read directory entries with `fs.readdir(path, { withFileTypes: true })`
 2. Filter only directories (skip files)
 3. Skip symlinks at first level
 4. Return list of folder paths
 
 **Key Differences from Recursive Scanning**:
+
 - Only looks at immediate children
 - Does not traverse into subdirectories
 - Much faster for large directory trees
@@ -278,6 +323,7 @@ async clean(
 ```
 
 **Algorithm**:
+
 1. For each folder in sequence:
    - Read immediate children with `fs.readdir()`
    - For each child:
@@ -291,12 +337,14 @@ async clean(
 2. Return array of results (success or failure for each folder)
 
 **Error Handling**:
+
 - Each child deletion wrapped in try-catch
 - On failure: stop that folder, record partial count, continue to next folder
 - Never re-throw errors
 - Return failure results with error messages
 
 **Safety Features**:
+
 - Sequential processing for better error tracking
 - Preserves parent folders
 - Continues after individual folder failures
@@ -318,6 +366,7 @@ function formatPath(path: string): string
 ```
 
 **Usage Notes**:
+
 - All async functions use `fs/promises`
 - Error handling done by callers
 - Cross-platform compatible
@@ -327,6 +376,7 @@ function formatPath(path: string): string
 **Purpose**: Entry point and workflow orchestration.
 
 **Workflow**:
+
 1. Validate settings (not empty, not placeholder)
 2. Validate and resolve path
 3. Scan for first-level folders
@@ -336,12 +386,14 @@ function formatPath(path: string): string
 7. Exit with appropriate code
 
 **Error Handling**:
+
 - Catches all errors from workflow
 - Displays user-friendly error messages
 - Different messages for different error types
 - Always exits with code (0 for success, 1 for failure)
 
 **Progress Display**:
+
 - TTY mode: Uses `\r` for single-line updates
 - Non-TTY mode: Uses newlines for each update
 - Truncates long paths (max 60 chars)
@@ -367,6 +419,7 @@ src/
 ### Unit Tests
 
 **Path Validator Tests** (`pathValidator.test.ts`):
+
 - Valid/invalid paths
 - Relative path resolution
 - Protected path detection
@@ -375,6 +428,7 @@ src/
 - Permission errors
 
 **File Utils Tests** (`fileUtils.test.ts`):
+
 - Path existence checking
 - Directory detection
 - Entry reading
@@ -382,12 +436,14 @@ src/
 - Path formatting
 
 **Scanner Tests** (`scanner.test.ts`):
+
 - First-level directory detection
 - File and symlink skipping
 - Empty directory handling
 - Permission errors
 
 **Cleaner Tests** (`cleaner.test.ts`):
+
 - Content deletion while preserving folders
 - Hidden file handling
 - Nested directory deletion
@@ -399,6 +455,7 @@ src/
 ### Integration Tests
 
 **Main Workflow Tests** (`main.test.ts`):
+
 - Full workflow from validation to cleaning
 - Settings validation scenarios
 - Protected path rejection
@@ -436,12 +493,14 @@ node --inspect-brk node_modules/.bin/vitest run
 ### Path Handling
 
 **Always**:
+
 - Use `path.resolve()` for absolute paths
 - Use `path.join()` for combining paths
 - Use `path.sep` for OS-specific separator
 - Use `path.normalize()` for cleaning paths
 
 **Never**:
+
 - Hardcode `/` or `\` in paths
 - Assume case sensitivity
 - Assume path length limits
@@ -489,6 +548,61 @@ it('should handle Unix paths', () => {
 - Permission model differences
 - No drive letters, absolute paths start with `/`
 
+## Available Commands
+
+### Development Commands
+
+**Linting and Formatting:**
+
+```bash
+# Check code style and quality
+pnpm lint
+
+# Format all TypeScript files
+pnpm format
+
+# Check formatting without modifying files
+pnpm format:check
+```
+
+**Building:**
+
+```bash
+# Compile TypeScript to JavaScript
+pnpm build
+
+# Development mode with auto-reload
+pnpm dev
+```
+
+**Testing:**
+
+```bash
+# Run all tests
+pnpm test
+
+# Run tests in watch mode (during development)
+pnpm test:watch
+
+# Generate coverage report
+pnpm test:coverage
+```
+
+### Running Scripts
+
+**Interactive Execution:**
+
+```bash
+# Start the tool (dry-mode by default)
+pnpm start
+
+# Start in live mode (makes real changes)
+pnpm start:live
+
+# Start with cache bypass
+pnpm start:no-cache
+```
+
 ## Troubleshooting
 
 ### Build Errors
@@ -496,6 +610,7 @@ it('should handle Unix paths', () => {
 **Issue**: TypeScript compilation errors
 
 **Solution**:
+
 ```bash
 pnpm install
 pnpm build
@@ -506,6 +621,7 @@ pnpm build
 **Issue**: Tests fail on Windows but pass on Mac
 
 **Solution**:
+
 - Check path separator usage
 - Check case sensitivity assumptions
 - Review cross-platform test mocks
@@ -513,6 +629,7 @@ pnpm build
 **Issue**: Permission errors in tests
 
 **Solution**:
+
 - Ensure temp directories are being cleaned up
 - Check file/folder permissions
 - May need to skip some tests in CI environments
@@ -522,6 +639,7 @@ pnpm build
 **Issue**: "Target folder not found"
 
 **Solution**:
+
 - Verify path in `settings.ts` exists
 - Check for typos
 - Try absolute path instead of relative
@@ -529,6 +647,7 @@ pnpm build
 **Issue**: "Permission denied"
 
 **Solution**:
+
 - Check folder permissions
 - Ensure user has read/write access
 - On Windows, check folder isn't locked by another process
@@ -536,6 +655,7 @@ pnpm build
 **Issue**: "Cannot clean protected system path"
 
 **Solution**:
+
 - This is a safety feature
 - Choose a different, non-system folder
 - Never disable this check
@@ -545,6 +665,7 @@ pnpm build
 **Issue**: ESLint/Prettier conflicts
 
 **Solution**:
+
 ```bash
 pnpm lint:fix
 pnpm prettier:fix
@@ -553,6 +674,7 @@ pnpm prettier:fix
 **Issue**: Vitest warnings
 
 **Solution**:
+
 - Always run tests with `NODE_OPTIONS='--no-warnings'`
 - Or use the npm scripts: `pnpm test`
 
@@ -568,9 +690,26 @@ pnpm prettier:fix
 ### Future Optimizations
 
 If performance becomes an issue:
+
 1. Parallel folder cleaning (with concurrency limit)
 2. Streaming directory reads for very large folders
 3. Progress throttling (update every N folders instead of every folder)
+
+## Extending the Application
+
+To add new functionality to Folders Cleaner:
+
+1. **New Security Rules**: Update `isProtectedPath` in `src/utils/pathValidator.ts` to add more system-critical directories.
+2. **Alternative Deletion Strategies**: Modify `src/core/cleaner.ts` to implement different cleanup behaviors (e.g., move to trash instead of permanent deletion).
+3. **Advanced Scanning**: Update `src/core/scanner.ts` to support deeper levels of scanning or specific file pattern exclusions.
+4. **UI Enhancements**: Modify `src/main.ts` to add more detailed progress reporting or interactive confirmation prompts.
+
+## External Resources
+
+- [Node.js File System API](https://nodejs.org/api/fs.html)
+- [Vitest Documentation](https://vitest.dev/)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
+- [pnpm Documentation](https://pnpm.io/docs)
 
 ## Security Considerations
 
@@ -609,3 +748,11 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Open an issue on GitHub
 - Check existing issues and documentation
 - Read the [README.md](README.md) for usage examples
+
+## Author
+
+- **Or Assayag** - _Initial work_ - [orassayag](https://github.com/orassayag)
+- Or Assayag <orassayag@gmail.com>
+- GitHub: https://github.com/orassayag
+- StackOverflow: https://stackoverflow.com/users/4442606/or-assayag?tab=profile
+- LinkedIn: https://linkedin.com/in/orassayag

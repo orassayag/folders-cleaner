@@ -78,7 +78,9 @@ export function isProtectedPath(resolvedPath: string): boolean {
   return false;
 }
 
-export async function validatePathPermissions(resolvedPath: string): Promise<void> {
+export async function validatePathPermissions(
+  resolvedPath: string
+): Promise<void> {
   try {
     await access(resolvedPath, constants.R_OK | constants.W_OK);
   } catch (error) {
@@ -92,7 +94,9 @@ export async function validatePathPermissions(resolvedPath: string): Promise<voi
   }
 }
 
-export async function validateAndResolvePath(targetPath: string): Promise<string> {
+export async function validateAndResolvePath(
+  targetPath: string
+): Promise<string> {
   if (!targetPath || targetPath.trim() === '') {
     throw new Error('Target path cannot be empty');
   }

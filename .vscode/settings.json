@@ -1,3 +1,19 @@
 {
-  "cSpell.words": ["gensync", "hiddendir", "jridgewell", "vitest", "файл"]
+  "cSpell.words": [
+    "Assayag",
+    "gensync",
+    "hiddendir",
+    "jridgewell",
+    "orassayag",
+    "subfolders",
+    "vitest",
+    "файл"
+  ],
+  "cSpell.ignorePaths": [
+    "coverage",
+    "node_modules",
+    "dist",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml"
+  ]
 }

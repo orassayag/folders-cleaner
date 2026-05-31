@@ -41,26 +41,28 @@ Based on [`/Users/orassayag/Repos/node-modules-remover/src/settings.ts`](/Users/
 
 ```typescript
 export const settings: Settings = {
-  targetPath: "/path/to/target",
+  targetPath: '/path/to/target',
 };
 ```
 
 **Cross-Platform Path Examples:**
 
 Mac/Linux:
+
 ```typescript
-targetPath: "/Users/username/projects/test"
-targetPath: "./relative/path"
-targetPath: "../parent/path"
+targetPath: '/Users/username/projects/test';
+targetPath: './relative/path';
+targetPath: '../parent/path';
 ```
 
 Windows (all formats work - Node.js normalizes them):
+
 ```typescript
-targetPath: "C:\\Users\\username\\projects\\test"  // Escaped backslashes
-targetPath: "C:/Users/username/projects/test"      // Forward slashes (recommended)
-targetPath: "D:\\projects\\test"
-targetPath: ".\\relative\\path"                     // Relative path
-targetPath: "\\\\server\\share\\folder"            // UNC network path
+targetPath: 'C:\\Users\\username\\projects\\test'; // Escaped backslashes
+targetPath: 'C:/Users/username/projects/test'; // Forward slashes (recommended)
+targetPath: 'D:\\projects\\test';
+targetPath: '.\\relative\\path'; // Relative path
+targetPath: '\\\\server\\share\\folder'; // UNC network path
 ```
 
 **Recommended:** Use forward slashes even on Windows for simplicity - Node.js handles the conversion automatically.
@@ -78,7 +80,7 @@ export interface FolderScanResult {
   path: string;
 }
 
-export type CleanResult = 
+export type CleanResult =
   | {
       success: true;
       folderPath: string;
@@ -103,6 +105,7 @@ export interface ProgressInfo {
 NEW module for comprehensive path validation and security:
 
 **Responsibilities:**
+
 - Validate path exists (throw error if not)
 - Validate path is a directory (throw error if file)
 - Handle both absolute and relative paths using `path.resolve()`
@@ -118,6 +121,7 @@ NEW module for comprehensive path validation and security:
 **Protected Paths (throw error if target matches):**
 
 **Unix/Mac:**
+
 - Root paths: `/`
 - System directories: `/etc`, `/usr`, `/bin`, `/sbin`, `/System`, `/Library`, `/Applications`
 - User home directory: `~`, `$HOME`, resolved home path
@@ -125,6 +129,7 @@ NEW module for comprehensive path validation and security:
 - Current working directory and its parents (up to 2 levels)
 
 **Windows:**
+
 - Root paths: `C:\`, `D:\`, etc. (any drive root)
 - System directories: `C:\Windows`, `C:\Program Files`, `C:\Program Files (x86)`, `C:\ProgramData`
 - User home directory: `%USERPROFILE%`, `C:\Users\Username`
@@ -133,14 +138,18 @@ NEW module for comprehensive path validation and security:
 - System32: `C:\Windows\System32`
 
 **Functions:**
+
 ```typescript
-export function validateAndResolvePath(targetPath: string): string
-export function isProtectedPath(resolvedPath: string): boolean
-export function isWindowsPath(path: string): boolean
-export async function validatePathPermissions(resolvedPath: string): Promise<void>
+export function validateAndResolvePath(targetPath: string): string;
+export function isProtectedPath(resolvedPath: string): boolean;
+export function isWindowsPath(path: string): boolean;
+export async function validatePathPermissions(
+  resolvedPath: string
+): Promise<void>;
 ```
 
 **Windows-Specific Validation:**
+
 ```typescript
 // Check if path is Windows format (has drive letter or UNC)
 function isWindowsPath(pathStr: string): boolean {
@@ -174,6 +183,7 @@ Simplified version of [`/Users/orassayag/Repos/node-modules-remover/src/core/sca
 Based on [`/Users/orassayag/Repos/node-modules-remover/src/core/remover.ts`](/Users/orassayag/Repos/node-modules-remover/src/core/remover.ts):
 
 **Deletion Strategy:**
+
 - Process first-level folders sequentially (one at a time for better error tracking and progress reporting)
 - For each first-level subfolder:
   1. Use `fs.readdir(path, { withFileTypes: true })` to get immediate children
@@ -191,6 +201,7 @@ Based on [`/Users/orassayag/Repos/node-modules-remover/src/core/remover.ts`](/Us
 - Handle permission errors gracefully - record error and continue with next folder
 
 **Progress Callback:**
+
 ```typescript
 export type ProgressCallback = (info: ProgressInfo) => void;
 
@@ -201,6 +212,7 @@ async clean(
 ```
 
 **Error Handling:**
+
 - Each child deletion wrapped in individual try-catch
 - If any child fails: stop processing that folder, mark as failed, record partial success count
 - Continue with next folder even if previous folder failed
@@ -211,6 +223,7 @@ async clean(
 Based on [`/Users/orassayag/Repos/node-modules-remover/src/main.ts`](/Users/orassayag/Repos/node-modules-remover/src/main.ts):
 
 **Flow:**
+
 1. Read settings from `settings.ts`
 2. Validate settings (ensure targetPath is not empty or placeholder)
 3. Validate and resolve target path using `pathValidator`
@@ -224,6 +237,7 @@ Based on [`/Users/orassayag/Repos/node-modules-remover/src/main.ts`](/Users/oras
 11. Exit with code 0 if all succeeded, code 1 if any failures
 
 **Progress Bar Implementation:**
+
 - Use simple text-based progress: `Processing: [3/10] folder-name...`
 - Update on each folder completion
 - Truncate long paths for display: paths longer than 60 chars shown as `...last-57-chars`
@@ -233,21 +247,24 @@ Based on [`/Users/orassayag/Repos/node-modules-remover/src/main.ts`](/Users/oras
 - Clear any previous line content with spaces before writing new progress
 
 **Error Handling:**
+
 - Validate settings before starting (see Settings Validation section below)
 - Catch validation errors and display clear, user-friendly error messages
 - Catch permission errors and exit with code 1
 - Wrap entire main() in try-catch, log fatal errors
 
 **Settings Validation:**
+
 - Check `targetPath` is not empty string: `if (!settings.targetPath)`
 - Check `targetPath` is not placeholder: `if (settings.targetPath === '/path/to/target')`
 - Throw descriptive error: `"Please configure targetPath in src/settings.ts before running"`
 - Display error with formatting:
+
   ```
   ❌ Error: Configuration Required
-  
+
     Please set a valid targetPath in src/settings.ts
-  
+
     Current value: "/path/to/target" (placeholder)
   ```
 
@@ -271,13 +288,14 @@ All tests use `vitest` with `NODE_OPTIONS='--no-warnings'` as per user rules.
 #### Unit Tests ([`src/utils/__tests__/`](src/utils/__tests__/))
 
 **`pathValidator.test.ts`:**
+
 - Test valid absolute paths (Mac: `/Users/test/folder`, Windows: `C:\Users\test\folder` and `C:/Users/test/folder`)
 - Test valid relative paths (`./test`, `../test`, `test/folder`)
 - Test path resolution to absolute paths on both platforms
 - Test Windows drive letter formats: `C:\`, `D:\`, with both `\` and `/` separators
 - Test Windows UNC paths: `\\server\share\folder`
 - Test mixed separators on Windows: `C:\path/to\folder` (should normalize)
-- Test protected path rejection: 
+- Test protected path rejection:
   - Unix: `/`, `/etc`, `/usr`, home directory
   - Windows: `C:\`, `C:\Windows`, `C:\Program Files`, `%USERPROFILE%`
 - Test non-existent path throws error
@@ -288,11 +306,13 @@ All tests use `vitest` with `NODE_OPTIONS='--no-warnings'` as per user rules.
 - Test case sensitivity differences (Windows case-insensitive, Unix case-sensitive)
 
 **`fileUtils.test.ts`:**
+
 - Test `pathExists()` with existing and non-existing paths
 - Test `isDirectory()` with files and directories
 - Test utility functions with temp directories
 
 **`scanner.test.ts`:**
+
 - Create temp directory structure in `beforeEach`
 - Test scanning returns only first-level directories
 - Test scanning skips files at first level
@@ -302,6 +322,7 @@ All tests use `vitest` with `NODE_OPTIONS='--no-warnings'` as per user rules.
 - Clean up temp directories in `afterEach`
 
 **`cleaner.test.ts`:**
+
 - Create temp folder structures with nested files/folders
 - Test deletion removes all contents but preserves parent folder
 - Test hidden files and folders are deleted
@@ -327,6 +348,7 @@ All tests use `vitest` with `NODE_OPTIONS='--no-warnings'` as per user rules.
 - Test exit codes (0 for success, 1 for failures)
 
 **Test Fixture Strategy:**
+
 - Use `fs.mkdtemp()` to create temporary test directories
 - Create nested structures: files, folders, hidden items
 - Create files with various names: regular, unicode (`file名.txt`), spaces (`file with spaces.txt`)
@@ -401,6 +423,7 @@ Based on [`/Users/orassayag/Repos/node-modules-remover/package.json`](/Users/ora
 ```
 
 **Usage:**
+
 1. Edit `src/settings.ts` to set `targetPath` (can use env variables)
 2. Run `pnpm install` to install dependencies
 3. Run `pnpm start` to execute the cleaner
@@ -466,10 +489,7 @@ Copy from node-modules-remover:
 ```json
 {
   "parser": "@typescript-eslint/parser",
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
-  ],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "plugins": ["@typescript-eslint"],
   "parserOptions": {
     "ecmaVersion": 2022,
@@ -479,7 +499,10 @@ Copy from node-modules-remover:
   "rules": {
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/explicit-function-return-type": "off",
-    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_" }
+    ]
   },
   "env": {
     "node": true,
@@ -525,6 +548,7 @@ coverage/
 Based on node-modules-remover README structure, adapted for folders-cleaner:
 
 **Sections to Include:**
+
 - Project title and badges (License: MIT, TypeScript, Node.js version)
 - Why Folders Cleaner? (Purpose and benefits)
 - Features list
@@ -547,6 +571,7 @@ Based on node-modules-remover README structure, adapted for folders-cleaner:
 ### [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
 Copy from [`/Users/orassayag/Repos/node-modules-remover/CONTRIBUTING.md`](/Users/orassayag/Repos/node-modules-remover/CONTRIBUTING.md) with:
+
 - Adapted references from "node-modules-remover" to "folders-cleaner"
 - Same structure: Code of Conduct, Getting Started, Development Setup, Coding Standards, Testing Guidelines, Commit Message Guidelines, Pull Request Process
 - Keep all coding standards and best practices
@@ -554,6 +579,7 @@ Copy from [`/Users/orassayag/Repos/node-modules-remover/CONTRIBUTING.md`](/Users
 ### [`INSTRUCTIONS.md`](INSTRUCTIONS.md)
 
 Copy from [`/Users/orassayag/Repos/node-modules-remover/INSTRUCTIONS.md`](/Users/orassayag/Repos/node-modules-remover/INSTRUCTIONS.md) with:
+
 - Adapted to folders-cleaner architecture (Scanner, Cleaner, PathValidator modules)
 - Update module documentation to reflect folders-cleaner specific logic
 - Keep development workflow, testing strategy, and best practices sections
@@ -595,6 +621,7 @@ The logic flow will be:
 7. **Exit**: Exit with appropriate code (0 for all success, 1 for any failures)
 
 **Cross-Platform Considerations:**
+
 - Use `path.resolve()` for path resolution (works on both Windows and Unix)
 - Use `path.sep` and `path.normalize()` for path operations (OS-aware)
 - Use `path.join()` for constructing paths (automatically uses correct separator)
@@ -614,6 +641,7 @@ The logic flow will be:
 Following the secure coding guidelines:
 
 ### Path Security
+
 - **Absolute path resolution**: Always resolve to absolute path using `path.resolve()` to handle relative paths safely
 - **Path existence validation**: Throw error if target path doesn't exist
 - **Directory validation**: Throw error if path points to a file instead of directory
@@ -631,22 +659,26 @@ Following the secure coding guidelines:
   - Handle reserved filenames (`CON`, `PRN`, `AUX`, `NUL`) - document limitation
 
 ### Permission Handling
+
 - **Strict permission errors**: Throw error (don't silently continue) on EACCES or EPERM errors
 - **Permission validation**: Check read/write permissions on target path before starting
 - **Clear error messages**: Display specific error messages for permission issues
 
 ### File System Operations
+
 - **Safe deletion**: Use `fs/promises` for all async operations
 - **Atomic operations**: Use `fs.rm()` with `force: true` for reliable deletion
 - **No path traversal**: All paths validated and resolved before operations
 - **Symlink handling**: Skip symlinks at first level, delete (not follow) symlinks inside folders
 
 ### Error Recovery
+
 - **Fail fast**: Throw errors immediately on validation or permission failures
 - **Clear exit codes**: Exit 0 for success, 1 for any failures
 - **User feedback**: Display clear error messages for all failure scenarios
 
 ### Input Validation
+
 - **No hardcoded paths in code**: All paths come from settings.ts
 - **Environment variable support**: Settings can reference environment variables
 - **Path format validation**: Validate path format is valid for current OS
@@ -654,58 +686,70 @@ Following the secure coding guidelines:
 ## Edge Cases & Error Handling
 
 ### Path Validation Errors (Display User-Friendly Message & Exit)
-1. **Non-existent path**: 
+
+1. **Non-existent path**:
+
    ```
    ❌ Error: Target folder not found
-   
+
      Path: /some/path
-   
+
      Please check:
      • Is the path spelled correctly?
      • Does the folder exist?
    ```
-2. **File instead of directory**: 
+
+2. **File instead of directory**:
+
    ```
    ❌ Error: Target must be a folder, not a file
-   
+
      Path: /some/file.txt
-   
+
      Please provide a folder path in src/settings.ts
    ```
-3. **Protected system path**: 
+
+3. **Protected system path**:
+
    ```
    ❌ Error: Cannot clean protected system path
-   
+
      Path: /etc
-   
+
      This path is protected for your safety.
      Please choose a different folder.
    ```
-4. **Permission denied on target**: 
+
+4. **Permission denied on target**:
+
    ```
    ❌ Error: Permission denied
-   
+
      Path: /some/path
-   
+
      You don't have permission to access this folder.
      Please check folder permissions or choose a different path.
    ```
+
 5. **Unconfigured settings**:
+
    ```
    ❌ Error: Configuration required
-   
+
      Please set a valid targetPath in src/settings.ts
-   
+
      Current value: "/path/to/target" (placeholder)
    ```
 
 ### Scanning Scenarios
+
 1. **Empty target directory**: Complete immediately with message "No subdirectories found in {path}"
 2. **No subdirectories (only files)**: Same as above
 3. **Symlinks at first level**: Skip them (don't include in folders to clean)
 4. **Permission error during scan**: Throw error and exit
 
 ### Cleaning Scenarios (Record Error & Continue)
+
 1. **Permission error during cleaning**: Record as failed folder, include error message, continue with next folder
 2. **Hidden files/folders**: Delete all (`.git`, `.DS_Store`, etc.)
 3. **Empty folders**: Process normally (no children to delete, itemsDeleted = 0)
@@ -718,6 +762,7 @@ Following the secure coding guidelines:
 10. **Symlink loops**: Won't be followed (deleted at top level only)
 
 ### Progress Bar Behavior
+
 - Display current folder being processed with truncated path (max 60 chars)
 - Show completion ratio: `[3/10]`
 - Update on each folder completion
@@ -725,6 +770,7 @@ Following the secure coding guidelines:
 - Final summary shows success/failure counts and total items deleted
 
 ### Exit Codes
+
 - **0**: All operations completed successfully
 - **1**: Any validation, permission, or deletion error occurred
 
@@ -733,6 +779,7 @@ Following the secure coding guidelines:
 ### Scenario 1: Successful Cleaning
 
 **Setup:**
+
 ```
 /Users/test/target/
 ├── folder1/
@@ -747,6 +794,7 @@ Following the secure coding guidelines:
 ```
 
 **Execution:**
+
 ```bash
 $ pnpm start
 
@@ -768,6 +816,7 @@ Total items deleted: 5
 ```
 
 **Result:**
+
 ```
 /Users/test/target/
 ├── folder1/  (empty - preserved)
@@ -778,12 +827,14 @@ Total items deleted: 5
 ### Scenario 2: No Subdirectories
 
 **Setup:**
+
 ```
 /Users/test/empty/
 (no subdirectories)
 ```
 
 **Execution:**
+
 ```bash
 $ pnpm start
 
@@ -799,13 +850,15 @@ No subdirectories found in /Users/test/empty
 ### Scenario 3: Protected Path Error
 
 **Settings:**
+
 ```typescript
 export const settings: Settings = {
-  targetPath: "/etc",
+  targetPath: '/etc',
 };
 ```
 
 **Execution:**
+
 ```bash
 $ pnpm start
 
@@ -826,6 +879,7 @@ Process exited with code 1
 Folder without read permissions at `/Users/test/noperm/folder1`
 
 **Execution:**
+
 ```bash
 $ pnpm start
 
@@ -853,13 +907,15 @@ Process exited with code 1
 ### Scenario 5: Relative Path
 
 **Settings:**
+
 ```typescript
 export const settings: Settings = {
-  targetPath: "./test-folders",
+  targetPath: './test-folders',
 };
 ```
 
 **Execution:**
+
 ```bash
 $ pnpm start
 
@@ -882,13 +938,15 @@ Total items deleted: 19
 ### Scenario 6: Protected System Path
 
 **Settings:**
+
 ```typescript
 export const settings: Settings = {
-  targetPath: "/etc",
+  targetPath: '/etc',
 };
 ```
 
 **Execution:**
+
 ```bash
 $ pnpm start
 
@@ -907,20 +965,22 @@ Process exited with code 1
 ### Scenario 7: Windows Path Handling
 
 **Settings (Windows):**
+
 ```typescript
 // All these formats work on Windows:
 export const settings: Settings = {
-  targetPath: "C:/Users/username/projects/test",  // Forward slashes (recommended)
+  targetPath: 'C:/Users/username/projects/test', // Forward slashes (recommended)
   // OR
-  targetPath: "C:\\Users\\username\\projects\\test",  // Escaped backslashes
+  targetPath: 'C:\\Users\\username\\projects\\test', // Escaped backslashes
   // OR
-  targetPath: "D:/projects/test",  // Different drive
+  targetPath: 'D:/projects/test', // Different drive
   // OR
-  targetPath: "./test-folders",  // Relative path
+  targetPath: './test-folders', // Relative path
 };
 ```
 
 **Execution (on Windows):**
+
 ```bash
 > pnpm start
 
@@ -946,6 +1006,7 @@ Total items deleted: 42
 **Note:** Node.js automatically converts forward slashes to backslashes on Windows, so both `C:/path` and `C:\path` work identically.
 
 **Windows Known Limitations:**
+
 - Paths longer than 260 characters may fail (Windows MAX_PATH limit)
 - Reserved filenames (`CON`, `PRN`, `AUX`, `NUL`, `COM1-9`, `LPT1-9`) cannot be deleted
 - File locking is more aggressive - ensure no programs are accessing the folders

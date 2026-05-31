@@ -1,8 +1,6 @@
-import { settings } from './settings.js';
-import { validateAndResolvePath } from './utils/pathValidator.js';
-import { Scanner } from './core/scanner.js';
-import { Cleaner } from './core/cleaner.js';
-import { formatPath } from './utils/fileUtils.js';
+import { settings } from './index.js';
+import { validateAndResolvePath, formatPath } from './utils/index.js';
+import { Scanner, Cleaner } from './core/index.js';
 import { ProgressInfo } from './types/index.js';
 
 function validateSettings(): void {
@@ -37,7 +35,9 @@ export async function main(): Promise<void> {
     validateSettings();
     const resolvedPath = await validateAndResolvePath(settings.targetPath);
     if (resolvedPath !== settings.targetPath) {
-      console.log(`Target: ${resolvedPath} (resolved from ${settings.targetPath})`);
+      console.log(
+        `Target: ${resolvedPath} (resolved from ${settings.targetPath})`
+      );
     } else {
       console.log(`Target: ${resolvedPath}`);
     }
@@ -64,7 +64,9 @@ export async function main(): Promise<void> {
       return sum + (r.success ? r.itemsDeleted : r.partiallyDeleted);
     }, 0);
     if (failureCount === 0) {
-      console.log(`\n✅ Successfully cleaned ${successCount}/${folders.length} folders`);
+      console.log(
+        `\n✅ Successfully cleaned ${successCount}/${folders.length} folders`
+      );
       console.log(`Total items deleted: ${totalItemsDeleted}\n`);
       console.log('✅ Done!\n');
       process.exit(0);
@@ -103,7 +105,9 @@ export async function main(): Promise<void> {
       console.error('\n❌ Error: Permission denied\n');
       console.error(`  Path: ${settings.targetPath}\n`);
       console.error("  You don't have permission to access this folder.");
-      console.error('  Please check folder permissions or choose a different path.\n');
+      console.error(
+        '  Please check folder permissions or choose a different path.\n'
+      );
     } else {
       console.error('\n❌ Fatal Error\n');
       console.error(`  ${errorMessage}\n`);
