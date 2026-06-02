@@ -4,6 +4,8 @@
     "gensync",
     "hiddendir",
     "jridgewell",
+    "maxtimeout",
+    "mintimeout",
     "orassayag",
     "subfolders",
     "vitest",
